@@ -1,9 +1,10 @@
-package Othello;
+package othello;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.Serializable;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.ArrayList;
@@ -32,10 +33,11 @@ public class Othello extends JFrame {
     BulletinBoard bulletinBoard = new BulletinBoard();
     Bot bot1 = new Bot();
     Bot bot2 = new Bot();
+    boolean isEnd = false;
 
     public Othello() {
         setSize(1000, 1000);
-        setTitle("Othello");
+        setTitle("othello");
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
@@ -57,11 +59,14 @@ public class Othello extends JFrame {
         });
 
         setVisible(true);
+    }
 
-//        useBot();
+    void withBot(String color) {
+        bot1.setColor(color);
     }
 
     void useBot() {
+
         bot1.setColor(black);
         bot1.enemy = bot2;
 
@@ -103,17 +108,22 @@ public class Othello extends JFrame {
             y = curY + direction[0];
 
             if (!(x < 0 || x >= directions.length || y < 0 || y >= directions.length)) {
-                if (!block[y][x].getName().equals(turn) && !(block[y][x].getName().equals(blockText) || block[y][x].getName().equals(blackTrans) || block[y][x].getName().equals(whiteTrans))) {
-                    searchColor = turn;
-                    search(curX, curY, direction[1], direction[0]);
-                }
+                finding(block[y][x].getName(), curX, curY, direction[1], direction[0]);
             }
+        }
+    }
+
+    void finding(String blockName, int curX, int curY, int dirX, int dirY) {
+        if (!blockName.equals(turn) && !(blockName.equals(blockText) || blockName.equals(blackTrans) || blockName.equals(whiteTrans))) {
+            searchColor = turn;
+            search(curX, curY, dirX, dirY);
         }
     }
 
     void search(int dirX, int dirY, int wayX, int wayY) {
         for (int i = 1; i <= block.length; i++) {
             if (dirY + i * wayY >= 0 && dirY + i * wayY < block.length && dirX + i * wayX >= 0 && dirX + i * wayX < block.length) {
+                if(block[dirY + i * wayY][dirX + i * wayX].getName().equals(blockText)) return;
                 if (block[dirY + i * wayY][dirX + i * wayX].getName().equals(searchColor)) {
                     block[dirY][dirX].setColor(turn + "_trans");
                     String way = block[dirY][dirX].getText();
@@ -176,8 +186,8 @@ public class Othello extends JFrame {
 
         for (Block[] blocks : block) {
             for (Block b : blocks) {
-                if (b.getName().equals(blockText)) emptyCount++;
-                if (b.getName().equals(whiteTrans) || b.getName().equals(blackTrans)) transCount++;
+                emptyCount += emptyCount(b.getName());
+                transCount += transCount(b.getName());
             }
         }
 
@@ -188,15 +198,29 @@ public class Othello extends JFrame {
             else if (blackCount > whiteCount) winner = black;
             else winner = "Draw";
 
-            JOptionPane.showMessageDialog(this, winner + "is the winner!", "Black " + blackCount + " : " + whiteCount + " White", JOptionPane.INFORMATION_MESSAGE);
+            isEnd = true;
+
+            String winText = winner.equals("Draw") ? "Draw!" : winner + " is the winner!";
+
+            JOptionPane.showMessageDialog(this, winText, "Black " + blackCount + " : " + whiteCount + " White", JOptionPane.INFORMATION_MESSAGE);
             int yes = JOptionPane.showConfirmDialog(this, "Play again?", "Replay", JOptionPane.YES_NO_OPTION);
-            if(yes == JOptionPane.YES_OPTION) {
+            if (yes == JOptionPane.YES_OPTION) {
+                bulletinBoard.dispose();
                 dispose();
                 new Othello();
             }
 
+            bulletinBoard.dispose();
             dispose();
         }
+    }
+
+    int emptyCount(String blockName) {
+        return blockName.equals(blockText) ? 1 : 0;
+    }
+
+    int transCount(String blockName) {
+        return (blockName.equals(whiteTrans) || blockName.equals(blackTrans)) ? 1 : 0;
     }
 
     void setBoard() {
@@ -249,7 +273,7 @@ public class Othello extends JFrame {
                 block[i][j] = new Block();
                 board.add(block[i][j]);
                 block[i][j].setOpaque(true);
-                block[i][j].setToolTipText(j+","+i);
+                block[i][j].setToolTipText(j + "," + i);
 
                 int x = j;
                 int y = i;
@@ -261,18 +285,11 @@ public class Othello extends JFrame {
                         showPossibility();
                         isFinish();
                     }
-                });
-                /*block[i][j].addMouseListener(new MouseAdapter() {
-                    @Override
-                    public void mouseClicked(MouseEvent e) {
-                        Block block1 = (Block) e.getSource();
-                        if (block1.getName().equals(blackTrans) || block1.getName().equals(whiteTrans)) {
-                            check(block1.getText(), x, y);
-                            showPossibility();
-                            isFinish();
-                        }
+
+                    if (bot1.enemy == null && turn.equals(bot1.color)) {
+                        bot1.scanningBoard();
                     }
-                }); */
+                });
             }
         }
         block[3][4].setColor(black);
@@ -325,7 +342,7 @@ public class Othello extends JFrame {
         }
     }
 
-    static class Bot {
+    static class Bot implements Serializable {
         ArrayList<String> board = new ArrayList<>();
         String color;
         Bot enemy;
@@ -335,17 +352,29 @@ public class Othello extends JFrame {
         }
 
         void scanningBoard() {
+            new Thread(() -> {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    Logger.getGlobal().warning("Interrupted");
+                    Thread.currentThread().interrupt();
+                }
 
-            board.clear();
+                board.clear();
 
-            for (Block[] blocks : block) {
-                for (Block b : blocks) {
-                    if (b.getName().equals(color + "_trans")) {
-                        board.add(b.getToolTipText());
+                for (Block[] blocks : block) {
+                    for (Block b : blocks) {
+                        if (b.getName().equals(color + "_trans")) {
+                            board.add(b.getToolTipText());
+                        }
                     }
                 }
-            }
 
+                selectBlock();
+            }).start();
+        }
+
+        void selectBlock() {
             Random random;
             try {
                 random = SecureRandom.getInstanceStrong();
@@ -354,22 +383,16 @@ public class Othello extends JFrame {
                 int x = Integer.parseInt(xy[0]);
                 int y = Integer.parseInt(xy[1]);
                 block[y][x].doClick();
-            } catch (NoSuchAlgorithmException e) {
+            } catch (NoSuchAlgorithmException | IllegalArgumentException e) {
                 e.printStackTrace();
             }
 
-            nextTurn(enemy);
+            if(enemy != null) {
+                nextTurn(enemy);
+            }
         }
 
         void nextTurn(Bot enemy) {
-
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                Logger.getGlobal().warning("Interrupted");
-                Thread.currentThread().interrupt();
-            }
-
             enemy.scanningBoard();
         }
     }

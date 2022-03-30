@@ -1,4 +1,4 @@
-package Othello;
+package othello;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -22,7 +22,7 @@ public class Othello_Start extends JFrame {
 
     void defaultSetting() {
         setSize(500, 300);
-        setTitle("Othello");
+        setTitle("othello");
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
@@ -43,12 +43,11 @@ public class Othello_Start extends JFrame {
 
     void addActionToButton() {
         localPlayButton.addActionListener(actionEvent -> {
+            dispose();
             new Othello_Options();
         });
 
-        onlinePlayButton.addActionListener(actionEvent -> {
-            JOptionPane.showMessageDialog(this, "아직 안됨.", "온라인 플레이", JOptionPane.ERROR_MESSAGE);
-        });
+        onlinePlayButton.addActionListener(actionEvent -> JOptionPane.showMessageDialog(this, "아직 안됨.", "온라인 플레이", JOptionPane.ERROR_MESSAGE));
     }
 
     public static void main(String[] args) {

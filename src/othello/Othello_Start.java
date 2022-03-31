@@ -3,6 +3,7 @@ package othello;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.io.IOException;
 
 public class Othello_Start extends JFrame {
     JButton localPlayButton = new JButton("로컬 플레이");
@@ -47,7 +48,11 @@ public class Othello_Start extends JFrame {
             new Othello_Options();
         });
 
-        onlinePlayButton.addActionListener(actionEvent -> JOptionPane.showMessageDialog(this, "아직 안됨.", "온라인 플레이", JOptionPane.ERROR_MESSAGE));
+        onlinePlayButton.addActionListener(actionEvent -> {
+//            JOptionPane.showMessageDialog(this, "아직 안됨.", "온라인 플레이", JOptionPane.ERROR_MESSAGE);
+            dispose();
+            new WaitingRoom();
+        });
     }
 
     public static void main(String[] args) {

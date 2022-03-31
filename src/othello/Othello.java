@@ -4,7 +4,11 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.io.Serializable;
+import java.net.Socket;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.ArrayList;
@@ -34,6 +38,8 @@ public class Othello extends JFrame {
     Bot bot1 = new Bot();
     Bot bot2 = new Bot();
     boolean isEnd = false;
+    Socket socket;
+    String userName;
 
     public Othello() {
         setSize(1000, 1000);
@@ -58,6 +64,36 @@ public class Othello extends JFrame {
             }
         });
 
+        setVisible(true);
+    }
+
+    public Othello(Socket socket, String userName) {
+        this.socket = socket;
+        this.userName = userName;
+
+        setSize(1000, 1000);
+        setTitle("othello");
+        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        setLocationRelativeTo(null);
+        setLayout(new BorderLayout());
+        ToolTipManager.sharedInstance().setEnabled(false);
+
+        setBoard();
+
+        bulletinBoard.setVisible(true);
+
+        showPossibility();
+
+        getContentPane().setBackground(Color.WHITE);
+
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                bulletinBoard.dispose();
+            }
+        });
+
+        System.out.println(socket.getInetAddress() + ":" + socket.getPort() + ", " + userName);
         setVisible(true);
     }
 

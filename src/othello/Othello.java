@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
 import java.util.logging.Logger;
+import java.util.stream.IntStream;
 
 public class Othello extends JFrame {
     JPanel numberWest = new JPanel(new GridLayout(8, 0));
@@ -40,6 +41,7 @@ public class Othello extends JFrame {
     boolean isEnd = false;
     Socket socket;
     String userName;
+    DataOutputStream out;
 
     public Othello() {
         setSize(1000, 1000);
@@ -67,9 +69,10 @@ public class Othello extends JFrame {
         setVisible(true);
     }
 
-    public Othello(Socket socket, String userName) {
+    public Othello(Socket socket, String userName, DataOutputStream out) {
         this.socket = socket;
-        this.userName = userName;
+        this.userName = userName.equals("Player1") ? black : white;
+        this.out = out;
 
         setSize(1000, 1000);
         setTitle("othello");
@@ -93,8 +96,36 @@ public class Othello extends JFrame {
             }
         });
 
-        System.out.println(socket.getInetAddress() + ":" + socket.getPort() + ", " + userName);
         setVisible(true);
+
+        receiveMessage();
+    }
+
+    void receiveMessage() {
+        try {
+            DataInputStream in = new DataInputStream(socket.getInputStream());
+            String msg;
+
+            while (in != null) {
+                msg = in.readUTF();
+                String[] headBody = msg.split(": ");
+                String[] coordinate = headBody[1].replaceAll(".* ","").split(",");
+                int x = Integer.parseInt(coordinate[0]);
+                int y = Integer.parseInt(coordinate[1]);
+                if(!headBody[0].equals(userName)) blockAction(block[y][x], x, y);
+                System.out.println(msg);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void sendMessage(String msg2) {
+        try {
+            out.writeUTF(userName + ": "+ msg2);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     void withBot(String color) {
@@ -300,9 +331,7 @@ public class Othello extends JFrame {
         alphabetNorth.setBorder(new EmptyBorder(0, 50, 0, 50));
 
         JComponent[] panels = {alphabetNorth, alphabetSouth, numberEast, numberWest};
-        for (int i = 0; i < 4; i++) {
-            panels[i].setOpaque(false);
-        }
+        IntStream.range(0, 4).forEach(i -> panels[i].setOpaque(false));
 
         for (int i = 0; i < block.length; i++) {
             for (int j = 0; j < block.length; j++) {
@@ -316,14 +345,23 @@ public class Othello extends JFrame {
 
                 block[i][j].addActionListener(actionEvent -> {
                     Block block1 = (Block) actionEvent.getSource();
-                    if (block1.getName().equals(blackTrans) || block1.getName().equals(whiteTrans)) {
-                        check(block1.getText(), x, y);
-                        showPossibility();
-                        isFinish();
-                    }
+                    if(socket != null) {
+                        if(turn.equals(userName)) {
+                            if (block1.getName().equals(blackTrans) || block1.getName().equals(whiteTrans)) {
+                                blockAction(block1, x, y);
+                                sendMessage(x+","+y);
+                            }
+                        } else {
+                            JOptionPane.showMessageDialog(null, "자신의 차례가 아닙니다.", "경고", JOptionPane.ERROR_MESSAGE);
+                        }
+                    } else {
+                        if (block1.getName().equals(blackTrans) || block1.getName().equals(whiteTrans)) {
+                            blockAction(block1, x, y);
+                        }
 
-                    if (bot1.enemy == null && turn.equals(bot1.color)) {
-                        bot1.scanningBoard();
+                        if (bot1.enemy == null && turn.equals(bot1.color)) {
+                            bot1.scanningBoard();
+                        }
                     }
                 });
             }
@@ -336,6 +374,12 @@ public class Othello extends JFrame {
         repaint();
 
         board.setOpaque(false);
+    }
+
+    void blockAction(Block block, int x, int y) {
+        check(block.getText(), x, y);
+        showPossibility();
+        isFinish();
     }
 
     public static void main(String[] args) {
@@ -354,6 +398,7 @@ public class Othello extends JFrame {
 
         public BulletinBoard() {
             setSize(300, 200);
+            setTitle("Scoreboard");
             setLayout(new BorderLayout());
             setDefaultCloseOperation(2);
             setLayout(new BorderLayout());

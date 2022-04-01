@@ -12,7 +12,7 @@ public class Othello_Server extends JFrame {
 
     /** XXX 03. 세번째 중요한것. 사용자들의 정보를 저장하는 맵입니다. */
     final Map<String, DataOutputStream> clientsMap = new HashMap<>();
-    public int clientsCount = 0;
+    int clientsCount = 0;
 
     public void setting() throws IOException {
         Collections.synchronizedMap(clientsMap); // 이걸 교통정리 해줍니다^^
@@ -48,6 +48,7 @@ public class Othello_Server extends JFrame {
 
     public void removeClient(String nick) {
         clientsMap.remove(nick);
+        clientsCount = clientsMap.size();
         sendMessage(nick + "님이 나가셨습니다.");
     }
 
@@ -60,6 +61,7 @@ public class Othello_Server extends JFrame {
             key = it.next();
             try {
                 clientsMap.get(key).writeUTF(msg);
+//                System.out.println(msg);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -90,6 +92,8 @@ public class Othello_Server extends JFrame {
                 while (in != null) {
                     String msg = in.readUTF();
                     sendMessage(msg);
+
+                    if(msg.endsWith("exit")) removeClient(nick);
                 }
             } catch (IOException e) {
                 // 사용접속종료시 여기서 에러 발생. 그럼나간거에요.. 여기서 리무브 클라이언트 처리 해줍니다.

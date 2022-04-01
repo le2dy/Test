@@ -1,6 +1,5 @@
 package othello;
 
-import javax.sound.sampled.Line;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
@@ -13,14 +12,19 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.util.logging.Logger;
 
 public class WaitingRoom extends JFrame {
+    String p1 = "Player1";
+    String player = "Player";
+    String ready = "Ready";
+    String wait = "Waiting...";
     JPanel centerPanel = new JPanel(new GridLayout(1, 2, 20, 0));
     JPanel player1Panel = new JPanel(new BorderLayout());
     JPanel player2Panel = new JPanel(new BorderLayout());
     JPanel player1ButtonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
     JPanel player2ButtonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-    JLabel player1NameLabel = new JLabel("Player1", SwingConstants.CENTER);
+    JLabel player1NameLabel = new JLabel(p1, SwingConstants.CENTER);
     JLabel player2NameLabel = new JLabel("Player2", SwingConstants.CENTER);
     JLabel[] readyStatusLabel = new JLabel[2];
     JButton[] player1ReadyButton = {new JButton("준비"), new JButton("취소")};
@@ -32,8 +36,12 @@ public class WaitingRoom extends JFrame {
 
         addAction();
 
-        client.setWaitingRoom(this);
-        client.connect();
+        try {
+            client.setWaitingRoom(this);
+            client.connect();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     void formSetting() {
@@ -57,13 +65,14 @@ public class WaitingRoom extends JFrame {
         for (int i = 0; i < panels.length; i++) {
             centerPanel.add(panels[i]);
             panels[i].add(labels[i], "North");
-            labels[i].setName("Player" + (i + 1));
+            labels[i].setName(player + (i + 1));
             panels[i].setBorder(new LineBorder(Color.BLACK));
 
             JPanel labelPanel = new JPanel(new GridLayout(2, 1));
 
             panels[i].add(labelPanel);
-            labelPanel.add(readyStatusLabel[i] = new JLabel("Waiting...", SwingConstants.CENTER));
+            readyStatusLabel[i] = new JLabel(wait, SwingConstants.CENTER);
+            labelPanel.add(readyStatusLabel[i]);
             JLabel colorLabel = new JLabel(color[i], SwingConstants.CENTER);
             labelPanel.add(colorLabel);
             colorLabel.setFont(new Font("", Font.PLAIN, 40));
@@ -78,15 +87,15 @@ public class WaitingRoom extends JFrame {
 
             int j = i;
             buttons[i][0].addActionListener(actionEvent -> {
-                if(client.order.equals("Player" +(j + 1))) {
-                    readyStatusLabel[j].setText("Ready");
+                if(client.order.equals(player +(j + 1))) {
+                    readyStatusLabel[j].setText(ready);
                     readyStatusLabel[j].setForeground(Color.GREEN);
-                    client.sendMessage("Ready");
+                    client.sendMessage(ready);
                 }
             });
             buttons[i][1].addActionListener(actionEvent -> {
-                if(client.order.equals("Player" +(j + 1))) {
-                    readyStatusLabel[j].setText("Waiting...");
+                if(client.order.equals(player +(j + 1))) {
+                    readyStatusLabel[j].setText(wait);
                     readyStatusLabel[j].setForeground(Color.RED);
                     client.sendMessage("Waiting");
                 }
@@ -100,6 +109,7 @@ public class WaitingRoom extends JFrame {
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
+                client.sendMessage("exit");
                 System.exit(0);
             }
         });
@@ -121,10 +131,10 @@ public class WaitingRoom extends JFrame {
     }
 
     void setName(JLabel label) {
-        if(!(label.getText().equals("Player1") || label.getText().equals("Player2"))) {
+        if(!(label.getText().equals(p1) || label.getText().equals("Player2"))) {
             JOptionPane.showMessageDialog(null, "이름은 한 번만 변경할 수 있습니다.", "경고", JOptionPane.ERROR_MESSAGE);
             return;
-        };
+        }
         String name = JOptionPane.showInputDialog(null, "이름을 입력해주세요.", "플레이어 이름 입력", JOptionPane.PLAIN_MESSAGE);
 
         if (name == null) {
@@ -139,8 +149,8 @@ public class WaitingRoom extends JFrame {
     }
 
     void setOtherPlayer() {
-        String[] names = client.NF.split(",");
-        if(client.order.equals("Player1")) {
+        String[] names = client.nameFlag.split(",");
+        if(client.order.equals(p1)) {
             if(names.length == 3) player2NameLabel.setText(names[1]);
         } else {
             player1NameLabel.setText(names[2]);
@@ -158,53 +168,53 @@ class Client extends JFrame {
 
     private DataOutputStream out;
     Socket socket;
-    String NF = "";
+    String nameFlag = "";
+    String ready = "Ready";
 
-    public void connect() {
-        try {
+    public void connect() throws IOException {
 
-            socket = new Socket("127.0.0.1", 7777);
-            System.out.println("서버 연결됨.");
+        socket = new Socket("127.0.0.1", 7777);
+        Logger.getGlobal().info("서버 연결됨.");
 
-            out = new DataOutputStream(socket.getOutputStream());
-            DataInputStream in = new DataInputStream(socket.getInputStream());
+        out = new DataOutputStream(socket.getOutputStream());
+        DataInputStream in = new DataInputStream(socket.getInputStream());
 
-            String msg = in.readUTF();
-            order = msg.replace("⇄", "");
+        String msg = in.readUTF();
+        order = msg.replace("⇄", "");
 
-            while (in != null) {
-                msg = in.readUTF();
-                if(msg.contains("NF")) {
-                    NF = msg;
-                    waitingRoom.setOtherPlayer();
-                } else if(msg.contains("Ready")) {
-                    if(msg.equals("Player1: Ready")) {
-                        waitingRoom.readyStatusLabel[0].setText("Ready");
-                        waitingRoom.readyStatusLabel[0].setForeground(Color.GREEN);
-                    } else {
-                        waitingRoom.readyStatusLabel[1].setText("Ready");
-                        waitingRoom.readyStatusLabel[1].setForeground(Color.GREEN);
-                    }
-                    if(waitingRoom.readyStatusLabel[0].getText().equals("Ready") && waitingRoom.readyStatusLabel[1].getText().equals("Ready")) {
-                        waitingRoom.dispose();
-                        new Othello(socket, order);
-                        break;
-                    }
-                } else if(msg.contains("Waiting")) {
-                    if(msg.equals("Player1: Waiting")) {
-                        waitingRoom.readyStatusLabel[0].setText("Waiting...");
-                        waitingRoom.readyStatusLabel[0].setForeground(Color.RED);
-                    } else {
-                        waitingRoom.readyStatusLabel[1].setText("Waiting...");
-                        waitingRoom.readyStatusLabel[1].setForeground(Color.RED);
-                    }
-                } else {
-                    System.out.println(msg);
+        while (in != null) {
+            msg = in.readUTF();
+            if(msg.contains("NF")) {
+                nameFlag = msg;
+                waitingRoom.setOtherPlayer();
+            } else if(msg.contains(ready)) {
+                setReadyStatusLabel(msg);
+                if(waitingRoom.readyStatusLabel[0].getText().equals(ready) && waitingRoom.readyStatusLabel[1].getText().equals(ready)) {
+                    waitingRoom.dispose();
+                    new Othello(socket, order, out);
+                    break;
                 }
-            }
+            } else if(msg.contains("Waiting")) {
+                setReadyStatusLabel(msg);
+            } else Logger.getGlobal().info(msg);
+        }
+    }
 
-        } catch (IOException e) {
-            e.printStackTrace();
+    void setReadyStatusLabel(String msg) {
+        if(msg.equals("Player1: Ready")) {
+            waitingRoom.readyStatusLabel[0].setText(ready);
+            waitingRoom.readyStatusLabel[0].setForeground(Color.GREEN);
+        } else {
+            waitingRoom.readyStatusLabel[1].setText(ready);
+            waitingRoom.readyStatusLabel[1].setForeground(Color.GREEN);
+        }
+
+        if(msg.equals("Player1: Waiting")) {
+            waitingRoom.readyStatusLabel[0].setText(waitingRoom.wait);
+            waitingRoom.readyStatusLabel[0].setForeground(Color.RED);
+        } else {
+            waitingRoom.readyStatusLabel[1].setText(waitingRoom.wait);
+            waitingRoom.readyStatusLabel[1].setForeground(Color.RED);
         }
     }
 

@@ -3,7 +3,6 @@ package othello;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.io.IOException;
 
 public class Othello_Start extends JFrame {
     JButton localPlayButton = new JButton("로컬 플레이");

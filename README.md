@@ -4,6 +4,20 @@ Chess and Othello has many bugs. Especially othello does.
 
 That will be fixed some day.
 
+## Snake
+
+### Project path
+src → project → Snake
+
+### How to play
+1. Run Snake class.
+2. Press Down or Right arrow to start.
+3. Turn direction with arrow key.
+4. When snake ate apple, snake will grow up. (Body length + 1)
+5. If snake crashed into the wall, game is over.
+6. If snake crashed into own body, also game is over.
+7. Enjoy!
+
 ## Chess
 ### NOTICE
 Only local can be play.
@@ -23,8 +37,9 @@ White is first.
 ## Othello
 
 ### Project path
-src → othello
+src → othello → Othello_Start or Othello_Server
 
+### How to play
 ### Local play
 
 1. Run Othello_Start class.

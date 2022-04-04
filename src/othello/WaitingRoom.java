@@ -168,12 +168,17 @@ class Client extends JFrame {
 
     private DataOutputStream out;
     Socket socket;
+    String ip;
     String nameFlag = "";
     String ready = "Ready";
 
     public void connect() throws IOException {
+        ip = JOptionPane.showInputDialog(null, "접속할 서버의 IP를 입력해 주세요.", "IP 입력", JOptionPane.PLAIN_MESSAGE);
+        if(ip == null) {
+            JOptionPane.showMessageDialog(null, "접속이 거부되었습니다.", "주소 입력 에러", JOptionPane.ERROR_MESSAGE);
+        }
 
-        socket = new Socket("127.0.0.1", 7777);
+        socket = new Socket(ip, 7777);
         Logger.getGlobal().info("서버 연결됨.");
 
         out = new DataOutputStream(socket.getOutputStream());

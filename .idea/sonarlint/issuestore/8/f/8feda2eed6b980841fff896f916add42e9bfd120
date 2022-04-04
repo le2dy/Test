@@ -1,0 +1,15 @@
+
+;
+java:S1948"%Make "out" transient or serializable.(Ö™÷Í
+>
+java:S1948"(Make "socket" transient or serializable.( ¡² 
+N	java:S106"9Replace this use of System.out or System.err by a logger.(ÑÆ®ÿ
+N	java:S106 "9Replace this use of System.out or System.err by a logger.(âŞ‡‘
+c
+java:S5361e"HReplace this call to "replaceAll()" by a call to the "replace()" method.(‹ÿåïıÿÿÿÿ
+D
+java:S1121F".Extract the assignment out of this expression.(„ÌŒ
+=
+java:S2189""Add an end condition to this loop.(˜í¬ßøÿÿÿÿ
+R
+java:S2589"7Remove this expression which always evaluates to "true"(˜í¬ßøÿÿÿÿ

@@ -5,17 +5,19 @@ import java.awt.*;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
+import java.net.*;
 import java.util.*;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
 
 public class Othello_Server extends JFrame {
 
     /** XXX 03. 세번째 중요한것. 사용자들의 정보를 저장하는 맵입니다. */
     final Map<String, DataOutputStream> clientsMap = new HashMap<>();
     int clientsCount = 0;
+    String ip;
 
     JPanel boardPanel = new JPanel();
     JLabel jLabel = new JLabel();
@@ -42,24 +44,25 @@ public class Othello_Server extends JFrame {
 
     public void setting() throws IOException {
         Collections.synchronizedMap(clientsMap); // 이걸 교통정리 해줍니다^^
-        ServerSocket serverSocket = new ServerSocket();
 
-        InetSocketAddress isa = new InetSocketAddress("222.236.108.236", 7777);
-        serverSocket.bind(isa);
+        try (ServerSocket serverSocket = new ServerSocket(7777); Socket s = new Socket()) {
+            s.connect(new InetSocketAddress("google.com", 80));
 
-        jLabel.setText("사용자 목록: 0명(" + serverSocket.getLocalSocketAddress() + ")");
+            ip = s.getLocalAddress().toString().replace("/", "");
 
-        while (clientsMap.size() <= 5) {
-            /** XXX 01. 첫번째. 서버가 할일 분담. 계속 접속받는것. */
-            System.out.println("서버 대기중...");
-            Socket socket = serverSocket.accept();
-            System.out.println(socket.getInetAddress());
-            System.out.println(socket.getInetAddress() + "에서 접속했습니다.");
-            Receiver receiver = new Receiver(socket);
-            receiver.start();
+            jLabel.setText("사용자 목록: 0명(" + ip + ":7777)");
+
+            while (clientsMap.size() <= 5) {
+                /** XXX 01. 첫번째. 서버가 할일 분담. 계속 접속받는것. */
+                System.out.println("서버 대기중...");
+                Socket socket = serverSocket.accept();
+                System.out.println(socket.getInetAddress() + "에서 접속했습니다.");
+                Receiver receiver = new Receiver(socket);
+                receiver.start();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-
-        serverSocket.close();
     }
 
     // 맵의내용(클라이언트) 저장과 삭제

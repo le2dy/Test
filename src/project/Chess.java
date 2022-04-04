@@ -21,9 +21,10 @@ public class Chess extends JFrame {
     static ChessPieces[] whitePieces = {new Pawn(), new Pawn(), new Pawn(), new Pawn(), new Pawn(), new Pawn(), new Pawn(), new Pawn(), new Rook(), new Knight(), new Bishop(), new Queen(), new King(), new Bishop(), new Knight(), new Rook()};
     String knight = "Knight";
     String bishop = "Bishop";
+    static String queen = "Queen";
     static String blackText = "Black";
     static String whiteText = "White";
-    String[] chessPieces = {"Pawn", "Pawn", "Pawn", "Pawn", "Pawn", "Pawn", "Pawn", "Pawn", "Rook", knight, bishop, "Queen", "King", bishop, knight, "Rook"};
+    String[] chessPieces = {"Pawn", "Pawn", "Pawn", "Pawn", "Pawn", "Pawn", "Pawn", "Pawn", "Rook", knight, bishop, queen, "King", bishop, knight, "Rook"};
     static HashMap<Integer, String> blackSets = new HashMap<>(); //1~8: pawns   9,16: rooks   10,15: knights   11,14: bishops   12: queen   13: king
     static HashMap<Integer, String> whiteSets = new HashMap<>(); //1~8: pawns   9,16: rooks   10,15: knights   11,14: bishops   12: queen   13: king
     static ArrayList<String> graveYard = new ArrayList<>();
@@ -41,6 +42,17 @@ public class Chess extends JFrame {
     static boolean isThreat = false;
 
     public Chess() {
+        defaultSetting();
+
+        addComponents();
+
+        setPieces();
+
+        getContentPane().setBackground(Color.WHITE);
+        setVisible(true);
+    }
+
+    void defaultSetting() {
         setSize(1000, 1000);
         setTitle("Chess");
         setLocationRelativeTo(null);
@@ -68,7 +80,9 @@ public class Chess extends JFrame {
             number[i] = new JLabel(i % 8 + 1 + "", SwingConstants.CENTER);
             number[i].setOpaque(false);
         });
+    }
 
+    void addComponents() {
         for (int i = 0; i < block.length; i++) {
             alphabetNorth.add(alphabet[i]);
             alphabetSouth.add(alphabet[i + 8]);
@@ -104,7 +118,9 @@ public class Chess extends JFrame {
                 });
             }
         }
+    }
 
+    void setPieces() {
         IntStream.range(0, chessPieces.length).forEach(i -> {
             ImageIcon imageIconBlack = new ImageIcon(getToolkit().getImage(path + chessPieces[i] + "_Black.png").getScaledInstance(100, 100, Image.SCALE_SMOOTH));
             ImageIcon imageIconWhite = new ImageIcon(getToolkit().getImage(path + chessPieces[i] + "_White.png").getScaledInstance(100, 100, Image.SCALE_SMOOTH));
@@ -137,9 +153,6 @@ public class Chess extends JFrame {
                 }
             }
         }
-
-        getContentPane().setBackground(Color.WHITE);
-        setVisible(true);
     }
 
     static void pieceMove(JPanel selBlock) {
@@ -161,12 +174,37 @@ public class Chess extends JFrame {
 
         if (selectedPieces.type.equals("Pawn")) selectedPieces.maxRange = 1;
 
-        detectCheck();
-
         if (turn.equals(whiteText)) turn = blackText;
         else turn = whiteText;
 
+        detectCheck();
     }
+
+//    static void detectCheck() {
+//        ChessPieces king = turn.equals(whiteText) ? whitePieces[12] : blackPieces[12];
+//        int y = king.curY;
+//        int x = king.curX;
+//        String checkMessage = turn + " king is Check";
+//
+//        for (int i = 1; i < 8; i++) {
+//            if(y - i >= 0 && block[y - i][x].getComponentCount() == 1 && !((ChessPieces)block[y - i][x].getComponent(0)).color.equals(turn))
+//                Logger.getGlobal().warning(checkMessage);
+//
+//            if(y + i < block.length && block[y + i][x].getComponentCount() == 1 && !((ChessPieces)block[y + i][x].getComponent(0)).color.equals(turn) && (((ChessPieces)block[y + i][x].getComponent(0)).type.equals("Rook") || ((ChessPieces)block[y + i][x].getComponent(0)).type.equals(Chess.queen)))
+//                Logger.getGlobal().warning(checkMessage);
+//
+//            if(x - i >= 0 && block[y][x - i].getComponentCount() == 1 && !((ChessPieces)block[y][x - i].getComponent(0)).color.equals(turn) && (((ChessPieces)block[y][x - i].getComponent(0)).type.equals("Rook") || ((ChessPieces)block[y][x - i].getComponent(0)).type.equals(Chess.queen)))
+//                Logger.getGlobal().warning(checkMessage);
+//
+//            if(x + i < block.length && block[y][x + i].getComponentCount() == 1 && !((ChessPieces)block[y][x + i].getComponent(0)).color.equals(turn) && (((ChessPieces)block[y][x + i].getComponent(0)).type.equals("Rook") || ((ChessPieces)block[y][x + i].getComponent(0)).type.equals(Chess.queen)))
+//                Logger.getGlobal().warning(checkMessage);
+//        }
+//
+//        if(x + 1 < block.length && x - 1 >= 0 && y + 1 < block.length && y - 1 >= 0 && !((ChessPieces)block[y + 1][x + 1].getComponent(0)).color.equals(turn) && ((ChessPieces)block[y + 1][x + 1].getComponent(0)).type.equals("Pawn"))
+//            Logger.getGlobal().warning(checkMessage);
+//        if(x + 1 < block.length && x - 1 >= 0 && y + 1 < block.length && y - 1 >= 0 && !((ChessPieces)block[y + 1][x - 1].getComponent(0)).color.equals(turn) && ((ChessPieces)block[y + 1][x - 1].getComponent(0)).type.equals("Pawn"))
+//            Logger.getGlobal().warning(checkMessage);
+//    }
 
     static void detectCheck() {
         String[] kingCoordinate;
@@ -260,15 +298,14 @@ public class Chess extends JFrame {
                 }
 
                 if(direction.equals("diagonal")) {
-                    if (pieces.curY - plusY < block.length && pieces.curX + plusX < block.length && block[pieces.curY - plusY][pieces.curX + plusX].getComponentCount() == 1 && !((ChessPieces) (block[pieces.curY - plusY][pieces.curX + plusX].getComponent(0))).color.equals(turn)) {
+                    if (pieces.curY - plusY >= 0 && pieces.curY - plusY < block.length && pieces.curX + plusX < block.length && block[pieces.curY - plusY][pieces.curX + plusX].getComponentCount() == 1 && !((ChessPieces) (block[pieces.curY - plusY][pieces.curX + plusX].getComponent(0))).color.equals(turn)) {
                         dir = 2;
                         dirY = -1;
                         dirX = 1;
                         check = true;
                         break;
                     }
-                    System.out.println(pieces.type);
-                    if (pieces.curY + plusY < block.length && pieces.curX - plusX < block.length && block[pieces.curY + plusY][pieces.curX - plusX].getComponentCount() == 1 && !((ChessPieces) (block[pieces.curY + plusY][pieces.curX - plusX].getComponent(0))).color.equals(turn)) {
+                    if (pieces.curY + plusY < block.length && pieces.curX - plusX >= 0 &&  pieces.curX - plusX < block.length && block[pieces.curY + plusY][pieces.curX - plusX].getComponentCount() == 1 && !((ChessPieces) (block[pieces.curY + plusY][pieces.curX - plusX].getComponent(0))).color.equals(turn)) {
                         dir = 2;
                         dirY = 1;
                         dirX = -1;
@@ -374,22 +411,22 @@ class ChessPieces extends JLabel {
     }
 
     void checkKillIsPossible() {
-
+        Logger.getGlobal().info("HI");
     }
 
     void checkAvoidanceIsPossible() {
-
+        Logger.getGlobal().info("Hello");
     }
 
 
     void checkBlockIsPossible() {
         ChessPieces[] myPieces;
 
-        if (Chess.turn.equals("Black")) myPieces = Chess.blackPieces;
+        if (Chess.turn.equals(Chess.blackText)) myPieces = Chess.blackPieces;
         else myPieces = Chess.whitePieces;
 
         for (ChessPieces piece : myPieces) {
-
+            piece.getName();
         }
 
     }
@@ -397,13 +434,11 @@ class ChessPieces extends JLabel {
     void select() {
         Chess.selectedPieces = sel;
 
-        if(Chess.isThreat) {
-            if (Integer.parseInt(sel.getName())== Chess.blocker) {
-                Logger.getGlobal().warning("Your blocker");
-                checkKillIsPossible();
-                checkBlockIsPossible();
-                checkAvoidanceIsPossible();
-            }
+        if(Chess.isThreat && Integer.parseInt(sel.getName())== Chess.blocker) {
+            Logger.getGlobal().warning("Your blocker");
+            checkKillIsPossible();
+            checkBlockIsPossible();
+            checkAvoidanceIsPossible();
         }
 
         Chess.reset();
@@ -477,7 +512,7 @@ class ChessPieces extends JLabel {
     }
 
     void drawAbleAttack(int ix, int iy) {
-        if (Chess.selectedPieces.color.equals("Black")) {
+        if (Chess.selectedPieces.color.equals(Chess.blackText)) {
             if (Chess.whiteSets.containsValue((curX + ix) + "," + (curY + iy))) {
                 fillGreen(ix, iy);
             }

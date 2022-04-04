@@ -1,12 +1,15 @@
 package othello;
 
 import javax.swing.*;
+import java.awt.*;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
+import java.util.List;
 
 public class Othello_Server extends JFrame {
 
@@ -14,13 +17,43 @@ public class Othello_Server extends JFrame {
     final Map<String, DataOutputStream> clientsMap = new HashMap<>();
     int clientsCount = 0;
 
+    JPanel boardPanel = new JPanel();
+    JLabel jLabel = new JLabel();
+    JButton shutdownButton = new JButton("Server Shutdown");
+
+    public Othello_Server() {
+        setSize(300, 300);
+        setTitle("사용자 목록");
+        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        setLayout(new BorderLayout());
+
+        add(boardPanel);
+        boardPanel.setLayout(new BoxLayout(boardPanel, BoxLayout.Y_AXIS));
+        boardPanel.add(jLabel);
+
+        add(shutdownButton, "South");
+
+        shutdownButton.addActionListener(actionEvent -> {
+            System.exit(0);
+        });
+
+        setVisible(true);
+    }
+
     public void setting() throws IOException {
         Collections.synchronizedMap(clientsMap); // 이걸 교통정리 해줍니다^^
-        ServerSocket serverSocket = new ServerSocket(7777);
+        ServerSocket serverSocket = new ServerSocket();
+
+        InetSocketAddress isa = new InetSocketAddress("222.236.108.236", 7777);
+        serverSocket.bind(isa);
+
+        jLabel.setText("사용자 목록: 0명(" + serverSocket.getLocalSocketAddress() + ")");
+
         while (clientsMap.size() <= 5) {
             /** XXX 01. 첫번째. 서버가 할일 분담. 계속 접속받는것. */
             System.out.println("서버 대기중...");
             Socket socket = serverSocket.accept();
+            System.out.println(socket.getInetAddress());
             System.out.println(socket.getInetAddress() + "에서 접속했습니다.");
             Receiver receiver = new Receiver(socket);
             receiver.start();
@@ -34,6 +67,11 @@ public class Othello_Server extends JFrame {
         clientsMap.put(nick, out);
         clientsCount = clientsMap.size();
         sendMessage(nick + "님이 접속하셨습니다.");
+
+        boardPanel.add(new JLabel(nick));
+        clientsCount = clientsMap.size();
+        jLabel.setText("사용자 목록: "+clientsCount + "명");
+
         sendNickname(clientsMap);
     }
 

@@ -50,7 +50,10 @@ public class Setting extends JFrame {
             }
         });
 
-        cancelButton.addActionListener(actionEvent -> new Othello_Options());
+        cancelButton.addActionListener(actionEvent -> {
+            dispose();
+            new Othello_Options();
+        });
     }
 
     void setScreen() {

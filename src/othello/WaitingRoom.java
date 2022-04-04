@@ -195,7 +195,13 @@ class Client extends JFrame {
                     break;
                 }
             } else if(msg.contains("Waiting")) {
-                setReadyStatusLabel(msg);
+                if(msg.equals("Player1: Waiting")) {
+                    waitingRoom.readyStatusLabel[0].setText(waitingRoom.wait);
+                    waitingRoom.readyStatusLabel[0].setForeground(Color.RED);
+                } else {
+                    waitingRoom.readyStatusLabel[1].setText(waitingRoom.wait);
+                    waitingRoom.readyStatusLabel[1].setForeground(Color.RED);
+                }
             } else Logger.getGlobal().info(msg);
         }
     }
@@ -207,14 +213,6 @@ class Client extends JFrame {
         } else {
             waitingRoom.readyStatusLabel[1].setText(ready);
             waitingRoom.readyStatusLabel[1].setForeground(Color.GREEN);
-        }
-
-        if(msg.equals("Player1: Waiting")) {
-            waitingRoom.readyStatusLabel[0].setText(waitingRoom.wait);
-            waitingRoom.readyStatusLabel[0].setForeground(Color.RED);
-        } else {
-            waitingRoom.readyStatusLabel[1].setText(waitingRoom.wait);
-            waitingRoom.readyStatusLabel[1].setForeground(Color.RED);
         }
     }
 

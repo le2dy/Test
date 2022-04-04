@@ -8,9 +8,6 @@ import java.io.IOException;
 import java.net.*;
 import java.util.*;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.LogRecord;
-import java.util.logging.Logger;
 
 public class Othello_Server extends JFrame {
 
@@ -82,7 +79,7 @@ public class Othello_Server extends JFrame {
         final String[] str = {"NF"};
         List<Object> arrays = Arrays.asList(map.keySet().toArray());
 
-        arrays.stream().forEach(key -> str[0] += key.toString().replaceAll(".*: ", ","));
+        arrays.forEach(key -> str[0] += key.toString().replaceAll(".*: ", ","));
 
         sendMessage(str[0].trim());
     }
@@ -102,7 +99,6 @@ public class Othello_Server extends JFrame {
             key = it.next();
             try {
                 clientsMap.get(key).writeUTF(msg);
-//                System.out.println(msg);
             } catch (IOException e) {
                 e.printStackTrace();
             }

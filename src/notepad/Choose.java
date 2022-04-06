@@ -38,7 +38,9 @@ public class Choose extends JFrame {
 
         jButton.addActionListener(actionEvent -> {
             try {
-                String name = JOptionPane.showInputDialog(null, "파일 이름을 입력해주세요.","", JOptionPane.PLAIN_MESSAGE);
+                String name = JOptionPane.showInputDialog(null, "파일 이름을 입력해주세요.","파일 이름 입력", JOptionPane.PLAIN_MESSAGE);
+
+                if(name == null) return;
 
                 File file1 = new File("/home/leedongyun/Desktop/notes/" + name + ".txt");
                 if(file1.exists()) {
@@ -92,8 +94,8 @@ public class Choose extends JFrame {
                     repaint();
                     revalidate();
                     if(e.getClickCount() == 2) {
-                        new Note(jLabel.getText());
-                        dispose();
+                        setVisible(false);
+                        new Note(jLabel.getText(), Choose.this);
                     }
                 }
             });

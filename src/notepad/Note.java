@@ -10,7 +10,7 @@ import java.nio.charset.StandardCharsets;
 public class Note extends JFrame {
     JTextArea jTextArea = new JTextArea();
 
-    public Note(String fileName) {
+    public Note(String fileName, Choose choose) {
         setSize(1000, 1000);
         setTitle(fileName);
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
@@ -45,14 +45,11 @@ public class Note extends JFrame {
                 } catch (IOException e1) {
                     e1.printStackTrace();
                 }
-                new Choose();
+                choose.setVisible(true);
             }
         });
 
         setVisible(true);
     }
 
-    public static void main(String[] args) {
-        new Note("note.txt");
-    }
 }

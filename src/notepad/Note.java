@@ -10,8 +10,9 @@ import java.nio.charset.StandardCharsets;
 public class Note extends JFrame {
     JTextArea jTextArea = new JTextArea();
 
-    public Note() {
+    public Note(String fileName) {
         setSize(1000, 1000);
+        setTitle(fileName);
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(new GridLayout(0,1));
@@ -19,7 +20,7 @@ public class Note extends JFrame {
         JScrollPane scrollPane = new JScrollPane(jTextArea);
         add(scrollPane);
 
-        try(InputStream inputStream = new FileInputStream("/home/leedongyun/Desktop/note.txt")) {
+        try(InputStream inputStream = new FileInputStream("/home/leedongyun/Desktop/notes/" + fileName)) {
             InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
             StringBuilder text = new StringBuilder();
             int cur;
@@ -37,13 +38,14 @@ public class Note extends JFrame {
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
-                try(OutputStream outputStream = new FileOutputStream("/home/leedongyun/Desktop/note.txt")) {
+                try(OutputStream outputStream = new FileOutputStream("/home/leedongyun/Desktop/notes/" + fileName)) {
                     String text = jTextArea.getText();
                     byte[] bytes = text.getBytes();
                     outputStream.write(bytes);
                 } catch (IOException e1) {
                     e1.printStackTrace();
                 }
+                new Choose();
             }
         });
 
@@ -51,6 +53,6 @@ public class Note extends JFrame {
     }
 
     public static void main(String[] args) {
-        new Note();
+        new Note("note.txt");
     }
 }

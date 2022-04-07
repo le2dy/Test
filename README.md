@@ -56,10 +56,12 @@ src → othello → Othello_Start or Othello_Server
 
 1. Run Othello_Server class. Only one person needs to do it.
 2. Run WaitingRoom class.
-3. First connected person is Player1 and another one is Player2.
-4. Press name label to enter the Player 1's name. (On your own device)
-5. Press name label to enter the Player 2's name. (On your own device)
-6. Both of player are Ready, game will be start.
-7. Player 1 is the first, player 2 is later.
-8. When game is end you can choose restart the game or exit. (It won't work.)
-9. Enjoy!
+3. Check host's IP from server window.
+4. Enter the server.
+5. First connected person is Player1 and another one is Player2.
+6. Press name label to enter the Player 1's name. (On your own device)
+7. Press name label to enter the Player 2's name. (On your own device)
+8. Both of player are Ready, game will be start.
+9. Player 1 is the first, player 2 is later.
+10. When game is end you can choose restart the game or exit. (It won't work.)
+11. Enjoy!

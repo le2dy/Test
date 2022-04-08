@@ -65,3 +65,6 @@ src → othello → Othello_Start or Othello_Server
 9. Player 1 is the first, player 2 is later.
 10. When game is end you can choose restart the game or exit. (It won't work.)
 11. Enjoy!
+
+### Mahjong
+Coming sooooooooooooooooooooooooooon

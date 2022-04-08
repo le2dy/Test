@@ -18,8 +18,6 @@ src → project → Snake
 6. If snake crashed into own body, also game is over.
 7. Enjoy!
 
----
-
 ## Chess
 ### NOTICE
 Only local can be play.
@@ -35,8 +33,6 @@ src → project → Chess
 [Wikipedia Chess](https://en.wikipedia.org/wiki/Chess)
 
 White is first.
-
----
 
 ## Othello
 

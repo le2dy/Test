@@ -2,6 +2,8 @@ package othello;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -11,7 +13,6 @@ import java.util.List;
 
 public class Othello_Server extends JFrame {
 
-    /** XXX 03. 세번째 중요한것. 사용자들의 정보를 저장하는 맵입니다. */
     final Map<String, DataOutputStream> clientsMap = new HashMap<>();
     int clientsCount = 0;
     String ip;
@@ -36,10 +37,17 @@ public class Othello_Server extends JFrame {
             System.exit(0);
         });
 
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                System.exit(0);
+            }
+        });
+
         setVisible(true);
     }
 
-    public void setting() throws IOException {
+    public void setting() {
         Collections.synchronizedMap(clientsMap); // 이걸 교통정리 해줍니다^^
 
         try (ServerSocket serverSocket = new ServerSocket(7777); Socket s = new Socket()) {
@@ -50,7 +58,6 @@ public class Othello_Server extends JFrame {
             jLabel.setText("사용자 목록: 0명(" + ip + ":7777)");
 
             while (clientsMap.size() <= 5) {
-                /** XXX 01. 첫번째. 서버가 할일 분담. 계속 접속받는것. */
                 System.out.println("서버 대기중...");
                 Socket socket = serverSocket.accept();
                 System.out.println(socket.getInetAddress() + "에서 접속했습니다.");
@@ -70,7 +77,7 @@ public class Othello_Server extends JFrame {
 
         boardPanel.add(new JLabel(nick));
         clientsCount = clientsMap.size();
-        jLabel.setText("사용자 목록: "+clientsCount + "명");
+        jLabel.setText("사용자 목록: "+clientsCount + "명(" + ip + ":7777)");
 
         sendNickname(clientsMap);
     }
@@ -92,6 +99,10 @@ public class Othello_Server extends JFrame {
 
     // 메시지 내용 전파
     public void sendMessage(String msg) {
+        getMessage(msg, clientsMap);
+    }
+
+    public static void getMessage(String msg, Map<String, DataOutputStream> clientsMap) {
         Iterator<String> it = clientsMap.keySet().iterator();
         String key;
 
@@ -105,7 +116,7 @@ public class Othello_Server extends JFrame {
         }
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         new Othello_Server().setting();
     }
 
@@ -127,10 +138,11 @@ public class Othello_Server extends JFrame {
         public void run() {
             try {// 계속 듣기만!!
                 while (in != null) {
+
                     String msg = in.readUTF();
                     sendMessage(msg);
 
-                    if(msg.endsWith("exit")) removeClient(nick);
+                    if (msg.endsWith("exit")) removeClient(nick);
                 }
             } catch (IOException e) {
                 // 사용접속종료시 여기서 에러 발생. 그럼나간거에요.. 여기서 리무브 클라이언트 처리 해줍니다.

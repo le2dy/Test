@@ -1,5 +1,7 @@
 package server;
 
+import othello.Othello_Server;
+
 import javax.swing.*;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -54,16 +56,7 @@ public class Server extends JFrame {
 
     // 메시지 내용 전파
     public void sendMessage(String msg) {
-        Iterator<String> it = clientsMap.keySet().iterator();
-        String key;
-        while (it.hasNext()) {
-            key = it.next();
-            try {
-                clientsMap.get(key).writeUTF(msg);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
+        Othello_Server.getMessage(msg, clientsMap);
     }
 
     public static void main(String[] args) {

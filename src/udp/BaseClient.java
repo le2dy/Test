@@ -33,6 +33,7 @@ public class BaseClient extends JFrame {
             @Override
             public void windowClosing(WindowEvent e) {
                 sendMessage(port + ":Disconnect");
+                System.exit(0);
             }
         });
 
@@ -73,12 +74,16 @@ public class BaseClient extends JFrame {
     void addMessage(String msg, String distinct) {
         Color color = null;
 
-        if(distinct.equals("me")) {
-            color = Color.YELLOW;
-        } else if(distinct.equals("other")) {
-            color = Color.WHITE;
-        } else if(distinct.equals("server")) {
-            color = Color.LIGHT_GRAY;
+        switch (distinct) {
+            case "me":
+                color = Color.YELLOW;
+                break;
+            case "other":
+                color = Color.WHITE;
+                break;
+            case "server":
+                color = Color.LIGHT_GRAY;
+                break;
         }
 
         JLabel message = new JLabel(msg, SwingConstants.RIGHT);

@@ -8,11 +8,10 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
-import java.net.Socket;
-import java.util.logging.Logger;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
 
 public class WaitingRoom extends JFrame {
     String p1 = "Player1";
@@ -29,20 +28,32 @@ public class WaitingRoom extends JFrame {
     JLabel[] readyStatusLabel = new JLabel[2];
     JButton[] player1ReadyButton = {new JButton("준비"), new JButton("취소")};
     JButton[] player2ReadyButton = {new JButton("준비"), new JButton("취소")};
-    Client client = new Client();
+    DatagramSocket socket;
+    String ip;
+    int port;
+    JLabel order;
 
-    public WaitingRoom() {
+    public WaitingRoom(String ip, int port) {
+        System.out.println(port);
         formSetting();
 
         addAction();
 
-        try {
-            client.setWaitingRoom(this);
-            client.connect();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        this.port = port;
+        this.ip = ip;
+
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                sendMessage(port + ":Disconnect");
+            }
+        });
+
+
+        setVisible(true);
+
     }
+
 
     void formSetting() {
         setSize(800, 500);
@@ -87,17 +98,17 @@ public class WaitingRoom extends JFrame {
 
             int j = i;
             buttons[i][0].addActionListener(actionEvent -> {
-                if(client.order.equals(player +(j + 1))) {
+                if (order.equals(labels[j])) {
                     readyStatusLabel[j].setText(ready);
                     readyStatusLabel[j].setForeground(Color.GREEN);
-                    client.sendMessage(ready);
+                    sendMessage("Notice:"+ready+":"+port);
                 }
             });
             buttons[i][1].addActionListener(actionEvent -> {
-                if(client.order.equals(player +(j + 1))) {
+                if (order.equals(labels[j])) {
                     readyStatusLabel[j].setText(wait);
                     readyStatusLabel[j].setForeground(Color.RED);
-                    client.sendMessage("Waiting");
+                    sendMessage("Notice:Waiting:"+port);
                 }
             });
         }
@@ -106,10 +117,17 @@ public class WaitingRoom extends JFrame {
 
         add(titleLabel, "North");
 
+        JButton testButton = new JButton("접속");
+        add(testButton,"South");
+
+        testButton.addActionListener(actionEvent -> new Thread(() -> {
+            sendMessage("User:Player:" + port);
+            receive();
+        }).start());
+
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
-                client.sendMessage("exit");
                 System.exit(0);
             }
         });
@@ -124,18 +142,14 @@ public class WaitingRoom extends JFrame {
             nameLabel.addMouseListener(new MouseAdapter() {
                 @Override
                 public void mouseClicked(MouseEvent e) {
-                    if (((JLabel) e.getSource()).getName().equals(client.order)) setName(((JLabel) e.getSource()));
+                    if (((JLabel) e.getSource()).getName().equals(order.getName())) setName(((JLabel) e.getSource()));
                 }
             });
         }
     }
 
     void setName(JLabel label) {
-        if(!(label.getText().equals(p1) || label.getText().equals("Player2"))) {
-            JOptionPane.showMessageDialog(null, "이름은 한 번만 변경할 수 있습니다.", "경고", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-        String name = JOptionPane.showInputDialog(null, "이름을 입력해주세요.", "플레이어 이름 입력", JOptionPane.PLAIN_MESSAGE);
+        String name = JOptionPane.showInputDialog(null, "이름을 입력해주세요.", "이름 입력", JOptionPane.PLAIN_MESSAGE, null, null, order.getText()).toString();
 
         if (name == null) {
             label.setText(label.getText());
@@ -144,92 +158,74 @@ public class WaitingRoom extends JFrame {
             setName(label);
         } else {
             label.setText(name);
-            client.sendMessage(name);
+            sendMessage("User:" + name + ":" + port);
         }
     }
 
-    void setOtherPlayer() {
-        String[] names = client.nameFlag.split(",");
-        if(client.order.equals(p1)) {
-            if(names.length == 3) player2NameLabel.setText(names[1]);
-        } else {
-            player1NameLabel.setText(names[2]);
-        }
-    }
+    void sendMessage(String str) {
+        try (DatagramSocket socket = new DatagramSocket()) {
+            DatagramPacket sendPacket = new DatagramPacket(str.getBytes(), str.getBytes().length,
+                    InetAddress.getByName(ip), 2500);
 
-    public static void main(String[] args) {
-        new WaitingRoom();
-    }
-}
-
-class Client extends JFrame {
-    WaitingRoom waitingRoom;
-    String order;
-
-    private DataOutputStream out;
-    Socket socket;
-    String ip;
-    String nameFlag = "";
-    String ready = "Ready";
-
-    public void connect() throws IOException {
-        ip = JOptionPane.showInputDialog(null, "접속할 서버의 IP를 입력해 주세요.", "IP 입력", JOptionPane.PLAIN_MESSAGE);
-        if(ip == null) {
-            JOptionPane.showMessageDialog(null, "접속이 거부되었습니다.", "주소 입력 에러", JOptionPane.ERROR_MESSAGE);
-        }
-
-        socket = new Socket(ip, 7777);
-        Logger.getGlobal().info("서버 연결됨.");
-
-        out = new DataOutputStream(socket.getOutputStream());
-        DataInputStream in = new DataInputStream(socket.getInputStream());
-
-        String msg = in.readUTF();
-        order = msg.replace("⇄", "");
-
-        while (in != null) {
-            msg = in.readUTF();
-            if(msg.contains("NF")) {
-                nameFlag = msg;
-                waitingRoom.setOtherPlayer();
-            } else if(msg.contains(ready)) {
-                setReadyStatusLabel(msg);
-                if(waitingRoom.readyStatusLabel[0].getText().equals(ready) && waitingRoom.readyStatusLabel[1].getText().equals(ready)) {
-                    waitingRoom.dispose();
-                    new Othello(socket, order, out);
-                    break;
-                }
-            } else if(msg.contains("Waiting")) {
-                if(msg.equals("Player1: Waiting")) {
-                    waitingRoom.readyStatusLabel[0].setText(waitingRoom.wait);
-                    waitingRoom.readyStatusLabel[0].setForeground(Color.RED);
-                } else {
-                    waitingRoom.readyStatusLabel[1].setText(waitingRoom.wait);
-                    waitingRoom.readyStatusLabel[1].setForeground(Color.RED);
-                }
-            } else Logger.getGlobal().info(msg);
-        }
-    }
-
-    void setReadyStatusLabel(String msg) {
-        if(msg.equals("Player1: Ready")) {
-            waitingRoom.readyStatusLabel[0].setText(ready);
-            waitingRoom.readyStatusLabel[0].setForeground(Color.GREEN);
-        } else {
-            waitingRoom.readyStatusLabel[1].setText(ready);
-            waitingRoom.readyStatusLabel[1].setForeground(Color.GREEN);
-        }
-    }
-
-    void setWaitingRoom(WaitingRoom waitingRoom) {
-        this.waitingRoom = waitingRoom;
-    }
-
-    public void sendMessage(String msg2) {
-        try {
-            out.writeUTF(order + ": "+ msg2);
+            socket.send(sendPacket);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+
+    void receive() {
+        byte[] bytes = new byte[512];
+        try {
+            socket = new DatagramSocket(port);
+            DatagramPacket packet = new DatagramPacket(bytes, bytes.length);
+
+            while (true) {
+                socket.receive(packet);
+                String data = new String(packet.getData(), 0, packet.getLength());
+                String[] partedData = data.split(":");
+
+                if (data.getBytes().length == 1) {
+                    order = data.equals("1") ? player1NameLabel : player2NameLabel;
+                    setName(order);
+                } else if(partedData[0].equals("Rival")) {
+                     JLabel label = order.equals(player1NameLabel) ? player2NameLabel : player1NameLabel;
+                     label.setText(partedData[1]);
+                } else if(port != Integer.parseInt(partedData[2])) {
+                    ignoreMyMessage(partedData);
+                } else if(partedData[1].equals("Server Shutdown")) break;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    void ignoreMyMessage(String[] partedData) {
+        if (partedData[0].equals("User")) {
+            if (order.equals(player1NameLabel)) player2NameLabel.setText(partedData[1]);
+            else player1NameLabel.setText(partedData[1]);
+        } else if(partedData[0].equals("Notice")) {
+            if(Integer.parseInt(partedData[2]) == 3000) {
+                setStatus(readyStatusLabel[0], partedData[1]);
+            } else {
+                setStatus(readyStatusLabel[1], partedData[1]);
+            }
+        }
+    }
+
+    void setStatus(JLabel statusLabel, String status) {
+        Color color = status.equals(ready) ? Color.GREEN : Color.RED;
+
+        statusLabel.setForeground(color);
+        statusLabel.setText(status);
+
+        if(readyStatusLabel[0].getText().equals(ready) && readyStatusLabel[1].getText().equals(ready)) {
+            new Othello(order.getName(), ip, socket);
+            System.exit(0);
+        }
+    }
+
+    public static void main(String[] args) {
+        new WaitingRoom("127.0.0.1", 3000);
+    }
 }
+

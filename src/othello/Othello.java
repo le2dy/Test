@@ -8,6 +8,9 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.Serializable;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.net.Socket;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -39,9 +42,9 @@ public class Othello extends JFrame {
     Bot bot1 = new Bot();
     Bot bot2 = new Bot();
     boolean isEnd = false;
-    Socket socket;
     String userName;
-    DataOutputStream out;
+    String ip = null;
+    DatagramSocket socket;
 
     public Othello() {
         setSize(1000, 1000);
@@ -70,10 +73,10 @@ public class Othello extends JFrame {
         setVisible(true);
     }
 
-    public Othello(Socket socket, String userName, DataOutputStream out) {
-        this.socket = socket;
+    public Othello(String userName, String ip, DatagramSocket socket) {
         this.userName = userName.equals("Player1") ? black : white;
-        this.out = out;
+        this.socket = socket;
+        this.ip = ip;
 
         setSize(1000, 1000);
         setTitle("othello");
@@ -103,27 +106,27 @@ public class Othello extends JFrame {
     }
 
     void receiveMessage() {
+        byte[] bytes = new byte[512];
         try {
-            DataInputStream in = new DataInputStream(socket.getInputStream());
-            String msg;
+            DatagramPacket packet = new DatagramPacket(bytes, bytes.length);
 
-            while (in != null) {
-                msg = in.readUTF();
-                String[] headBody = msg.split(": ");
-                String[] coordinate = headBody[1].replaceAll(".* ","").split(",");
-                int x = Integer.parseInt(coordinate[0]);
-                int y = Integer.parseInt(coordinate[1]);
-                if(!headBody[0].equals(userName)) blockAction(block[y][x], x, y);
-                System.out.println(msg);
+            while (!isEnd) {
+                socket.receive(packet);
+                String data = new String(packet.getData(), 0, packet.getLength());
+                String[] partedData = data.split(":");
+
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public void sendMessage(String msg2) {
-        try {
-            out.writeUTF(userName + ": "+ msg2);
+    void sendMessage(String str) {
+        try (DatagramSocket socket = new DatagramSocket()) {
+            DatagramPacket sendPacket = new DatagramPacket(str.getBytes(), str.getBytes().length,
+                    InetAddress.getByName(ip), 2500);
+
+            socket.send(sendPacket);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -346,7 +349,7 @@ public class Othello extends JFrame {
 
                 block[i][j].addActionListener(actionEvent -> {
                     Block block1 = (Block) actionEvent.getSource();
-                    if(socket != null) {
+                    if(ip != null) {
                         if(turn.equals(userName)) {
                             if (block1.getName().equals(blackTrans) || block1.getName().equals(whiteTrans)) {
                                 blockAction(block1, x, y);

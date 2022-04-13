@@ -11,6 +11,7 @@ import java.util.Map;
 
 public class Othello_Server_New extends JFrame {
     HashMap<Integer, String> clientsMap = new HashMap<>();
+    HashMap<Integer, String> clientsIPMap = new HashMap<>();
     String ip;
     int port = 2500;
     boolean isShutdown = false;
@@ -71,9 +72,7 @@ public class Othello_Server_New extends JFrame {
                 String data = new String(packet.getData(), 0, packet.getLength());
                 String[] partedData = data.split(":");
 
-                if(partedData[0].equals("Test")) {
-                    sendMessage("Receive", Integer.parseInt(partedData[1]));
-                } else if (partedData[0].equals("Notice")) {
+                if (partedData[0].equals("Notice")) {
                     sendMessageToClients(message, data);
                 } else if (partedData[1].equals("Disconnect")) {
                     checkDisconnect(partedData);
@@ -94,7 +93,7 @@ public class Othello_Server_New extends JFrame {
         if(clientsMap.size() >= 2) {
             for (int key: clientsMap.keySet()) {
                 if(key != Integer.parseInt(port)) {
-                    sendMessage("Rival:"+clientsMap.get(key)+":"+key, Integer.parseInt(port));
+                    sendMessage("Rival:"+clientsMap.get(key)+":"+key, Integer.parseInt(port), clientsIPMap.get(key));
                 }
             }
         }
@@ -124,6 +123,7 @@ public class Othello_Server_New extends JFrame {
 
     void addUser(int key, String[] partedData) {
         clientsMap.put(key, partedData[1]);
+        clientsIPMap.put(key, partedData[3]);
 
         JPanel namePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         namePanel.setName("Just panel.");
@@ -140,11 +140,12 @@ public class Othello_Server_New extends JFrame {
         boardPanel.add(namePanel);
         namePanel.setPreferredSize(new Dimension(300, 20));
 
-        sendMessage(clientsMap.size() + "", key);
+        sendMessage(clientsMap.size() + "", key, partedData[3]);
     }
 
     void checkDisconnect(String[] data) {
         String msg = clientsMap.get(Integer.parseInt(data[0])) + " has Left.";
+        String ip = clientsIPMap.get(Integer.parseInt(data[0]));
 
         for (Component c : boardPanel.getComponents()) {
             if (c.getName().equals(data[0])) boardPanel.remove(c);
@@ -159,21 +160,24 @@ public class Othello_Server_New extends JFrame {
     void sendMessageToClients(String status, String message) {
         for (Map.Entry<Integer, String> entry : clientsMap.entrySet()) {
             int clientPort = entry.getKey();
+            String IP = clientsIPMap.get(clientPort);
 
             if (status.equals(this.message)) {
-                sendMessage(message, clientPort);
+                sendMessage(message, clientPort, IP);
             } else if (status.equals("notice")) {
-                sendMessage("#Notice" + clientsMap.get(clientPort) + " has left.", clientPort);
+                sendMessage("#Notice" + clientsMap.get(clientPort) + " has left.", clientPort, IP);
             }
         }
 
     }
 
-    void sendMessage(String str, int port) {
+    void sendMessage(String str, int port, String IP) {
         System.out.println(str);
         try (DatagramSocket socket = new DatagramSocket()) {
+//            DatagramPacket sendPacket = new DatagramPacket(str.getBytes(), str.getBytes().length,
+//                    InetAddress.getByName("127.0.0.1"), port);
             DatagramPacket sendPacket = new DatagramPacket(str.getBytes(), str.getBytes().length,
-                    InetAddress.getByName("127.0.0.1"), port);
+                    InetAddress.getByName(IP), port);
             socket.send(sendPacket);
         } catch (IOException e) {
             e.printStackTrace();

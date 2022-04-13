@@ -9,9 +9,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
+import java.net.*;
 
 public class WaitingRoom extends JFrame {
     String p1 = "Player1";
@@ -34,7 +32,6 @@ public class WaitingRoom extends JFrame {
     JLabel order;
 
     public WaitingRoom(String ip, int port) {
-        System.out.println(port);
         formSetting();
 
         addAction();
@@ -121,7 +118,15 @@ public class WaitingRoom extends JFrame {
         add(testButton,"South");
 
         testButton.addActionListener(actionEvent -> new Thread(() -> {
-            sendMessage("User:Player:" + port);
+            String myIp = "";
+            try (Socket s = new Socket()) {
+                s.connect(new InetSocketAddress("google.com", 80));
+                myIp = s.getLocalAddress().toString().replace("/", "");
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            sendMessage("User:Player:" + port+":"+myIp);
             receive();
         }).start());
 
@@ -225,7 +230,7 @@ public class WaitingRoom extends JFrame {
     }
 
     public static void main(String[] args) {
-        new WaitingRoom("127.0.0.1", 3000);
+        new WaitingRoom("192.168.100.225", 3000);
     }
 }
 

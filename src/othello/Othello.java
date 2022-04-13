@@ -4,14 +4,9 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.Serializable;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.Socket;
+import java.net.*;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.ArrayList;
@@ -79,7 +74,7 @@ public class Othello extends JFrame {
         this.ip = ip;
 
         setSize(1000, 1000);
-        setTitle("othello");
+        setTitle("othello-" + socket.getLocalPort());
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
@@ -113,8 +108,12 @@ public class Othello extends JFrame {
             while (!isEnd) {
                 socket.receive(packet);
                 String data = new String(packet.getData(), 0, packet.getLength());
-                String[] partedData = data.split(":");
+                String[] partedData = data.split(": ");
+                String[] coordinate = partedData[1].split(",");
+                int x = Integer.parseInt(coordinate[0]);
+                int y = Integer.parseInt(coordinate[1]);
 
+                if (!partedData[0].equals(userName)) blockAction(block[y][x], x, y);
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -122,11 +121,11 @@ public class Othello extends JFrame {
     }
 
     void sendMessage(String str) {
-        try (DatagramSocket socket = new DatagramSocket()) {
+        try (DatagramSocket server = new DatagramSocket()) {
             DatagramPacket sendPacket = new DatagramPacket(str.getBytes(), str.getBytes().length,
                     InetAddress.getByName(ip), 2500);
 
-            socket.send(sendPacket);
+            server.send(sendPacket);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -194,7 +193,7 @@ public class Othello extends JFrame {
     void search(int dirX, int dirY, int wayX, int wayY) {
         for (int i = 1; i <= block.length; i++) {
             if (dirY + i * wayY >= 0 && dirY + i * wayY < block.length && dirX + i * wayX >= 0 && dirX + i * wayX < block.length) {
-                if(block[dirY + i * wayY][dirX + i * wayX].getName().equals(blockText)) return;
+                if (block[dirY + i * wayY][dirX + i * wayX].getName().equals(blockText)) return;
                 if (block[dirY + i * wayY][dirX + i * wayX].getName().equals(searchColor)) {
                     block[dirY][dirX].setColor(turn + "_trans");
                     String way = block[dirY][dirX].getText();
@@ -349,23 +348,10 @@ public class Othello extends JFrame {
 
                 block[i][j].addActionListener(actionEvent -> {
                     Block block1 = (Block) actionEvent.getSource();
-                    if(ip != null) {
-                        if(turn.equals(userName)) {
-                            if (block1.getName().equals(blackTrans) || block1.getName().equals(whiteTrans)) {
-                                blockAction(block1, x, y);
-                                sendMessage(x+","+y);
-                            }
-                        } else {
-                            JOptionPane.showMessageDialog(null, "자신의 차례가 아닙니다.", "경고", JOptionPane.ERROR_MESSAGE);
-                        }
+                    if (ip != null) {
+                        onOnlineGame(block1, x, y);
                     } else {
-                        if (block1.getName().equals(blackTrans) || block1.getName().equals(whiteTrans)) {
-                            blockAction(block1, x, y);
-                        }
-
-                        if (bot1.enemy == null && turn.equals(bot1.color)) {
-                            bot1.scanningBoard();
-                        }
+                        onOfflineGame(block1, x, y);
                     }
                 });
             }
@@ -380,6 +366,27 @@ public class Othello extends JFrame {
         board.setOpaque(false);
     }
 
+    void onOfflineGame(Block block1, int x, int y) {
+        if (block1.getName().equals(blackTrans) || block1.getName().equals(whiteTrans)) {
+            blockAction(block1, x, y);
+        }
+
+        if (bot1.enemy == null && turn.equals(bot1.color)) {
+            bot1.scanningBoard();
+        }
+    }
+
+    void onOnlineGame(Block block1, int x, int y) {
+        if (turn.equals(userName)) {
+            if (block1.getName().equals(blackTrans) || block1.getName().equals(whiteTrans)) {
+                blockAction(block1, x, y);
+                sendMessage(userName + ": " + x + "," + y);
+            }
+        } else {
+            JOptionPane.showMessageDialog(null, "자신의 차례가 아닙니다.", "경고", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
     void blockAction(Block block, int x, int y) {
         check(block.getText(), x, y);
         showPossibility();
@@ -387,7 +394,11 @@ public class Othello extends JFrame {
     }
 
     public static void main(String[] args) {
-        new Othello();
+        try {
+            new Othello("Player1", "192.168.45.99", new DatagramSocket(3000));
+        } catch (SocketException e) {
+            e.printStackTrace();
+        }
     }
 
     static class BulletinBoard extends JDialog {
@@ -472,7 +483,7 @@ public class Othello extends JFrame {
                 e.printStackTrace();
             }
 
-            if(enemy != null) {
+            if (enemy != null) {
                 nextTurn(enemy);
             }
         }

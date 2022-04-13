@@ -32,12 +32,13 @@ public class WaitingRoom extends JFrame {
     JLabel order;
 
     public WaitingRoom(String ip, int port) {
+        this.port = port;
+        this.ip = ip;
+
         formSetting();
 
         addAction();
 
-        this.port = port;
-        this.ip = ip;
 
         addWindowListener(new WindowAdapter() {
             @Override
@@ -54,7 +55,7 @@ public class WaitingRoom extends JFrame {
 
     void formSetting() {
         setSize(800, 500);
-        setTitle("대기실");
+        setTitle("대기실-"+port);
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
@@ -168,11 +169,11 @@ public class WaitingRoom extends JFrame {
     }
 
     void sendMessage(String str) {
-        try (DatagramSocket socket = new DatagramSocket()) {
+        try (DatagramSocket server = new DatagramSocket()) {
             DatagramPacket sendPacket = new DatagramPacket(str.getBytes(), str.getBytes().length,
                     InetAddress.getByName(ip), 2500);
 
-            socket.send(sendPacket);
+            server.send(sendPacket);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -192,6 +193,9 @@ public class WaitingRoom extends JFrame {
                 if (data.getBytes().length == 1) {
                     order = data.equals("1") ? player1NameLabel : player2NameLabel;
                     setName(order);
+                } else if(data.equals("Move to game")) {
+                        dispose();
+                        new Othello(order.getName(), ip, socket);
                 } else if(partedData[0].equals("Rival")) {
                      JLabel label = order.equals(player1NameLabel) ? player2NameLabel : player1NameLabel;
                      label.setText(partedData[1]);
@@ -224,13 +228,12 @@ public class WaitingRoom extends JFrame {
         statusLabel.setText(status);
 
         if(readyStatusLabel[0].getText().equals(ready) && readyStatusLabel[1].getText().equals(ready)) {
-            new Othello(order.getName(), ip, socket);
-            System.exit(0);
+            sendMessage("Move to game");
         }
     }
 
     public static void main(String[] args) {
-        new WaitingRoom("192.168.100.225", 3000);
+        new WaitingRoom("192.168.45.99", 3000);
     }
 }
 

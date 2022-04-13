@@ -3,8 +3,6 @@ package othello;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.io.IOException;
-import java.net.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Othello_Start extends JFrame {
@@ -50,9 +48,7 @@ public class Othello_Start extends JFrame {
             new Othello_Options();
         });
 
-        onlinePlayButton.addActionListener(actionEvent -> {
-            showServerPanel();
-        });
+        onlinePlayButton.addActionListener(actionEvent -> showServerPanel());
     }
 
     void showServerPanel() {

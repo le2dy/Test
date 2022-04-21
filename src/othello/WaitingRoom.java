@@ -28,7 +28,9 @@ public class WaitingRoom extends JFrame {
     JButton[] player2ReadyButton = {new JButton("준비"), new JButton("취소")};
     DatagramSocket socket;
     String ip;
+    String myIp;
     int port;
+    int serverPort = 2500;
     JLabel order;
 
     public WaitingRoom(String ip, int port) {
@@ -39,10 +41,13 @@ public class WaitingRoom extends JFrame {
 
         addAction();
 
-        try {
-            socket = new DatagramSocket(port);
-            socket.connect(new InetSocketAddress(2500));
-        } catch (SocketException e) {
+        try (Socket s = new Socket()) {
+            s.connect(new InetSocketAddress("google.com", 80));
+            myIp = s.getLocalAddress().toString().replace("/", "");
+
+            socket = new DatagramSocket(new InetSocketAddress(myIp, port));
+            socket.connect(new InetSocketAddress(InetAddress.getByName(ip),serverPort));
+        } catch (IOException e) {
             e.printStackTrace();
         }
 
@@ -125,14 +130,6 @@ public class WaitingRoom extends JFrame {
         add(testButton, "South");
 
         testButton.addActionListener(actionEvent -> new Thread(() -> {
-            String myIp = "";
-            try (Socket s = new Socket()) {
-                s.connect(new InetSocketAddress("google.com", 80));
-                myIp = s.getLocalAddress().toString().replace("/", "");
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
             sendMessage("User:Player:" + port + ":" + myIp);
             receive();
         }).start());
@@ -177,7 +174,7 @@ public class WaitingRoom extends JFrame {
     void sendMessage(String str) {
         try {
             DatagramPacket sendPacket = new DatagramPacket(str.getBytes(), str.getBytes().length,
-                    socket.getInetAddress(), 2500);
+                    socket.getInetAddress(), serverPort);
             socket.send(sendPacket);
         } catch (IOException e) {
             e.printStackTrace();
@@ -189,12 +186,11 @@ public class WaitingRoom extends JFrame {
 
             while (true) {
                 byte[] bytes = new byte[512];
-                DatagramPacket packet = new DatagramPacket(bytes, bytes.length, socket.getInetAddress(), 2500);
+                DatagramPacket packet = new DatagramPacket(bytes, bytes.length);
+
                 socket.receive(packet);
                 String data = new String(packet.getData(), 0, packet.getLength());
                 String[] partedData = data.split(":");
-
-                System.out.println(data);
 
                 if (data.getBytes().length == 1) {
                     order = data.equals("1") ? player1NameLabel : player2NameLabel;

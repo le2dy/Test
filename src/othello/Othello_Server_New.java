@@ -31,7 +31,6 @@ public class Othello_Server_New extends JFrame {
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
 
-        socket = new DatagramSocket(port);
 
         add(boardPanel);
         boardPanel.setLayout(new BoxLayout(boardPanel, BoxLayout.Y_AXIS));
@@ -48,6 +47,7 @@ public class Othello_Server_New extends JFrame {
             ip = s.getLocalAddress().toString().replace("/", "");
 
             jLabel.setText("사용자 목록: 0명(" + ip + ":2500)");
+            socket = new DatagramSocket(new InetSocketAddress(ip, port));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -98,11 +98,11 @@ public class Othello_Server_New extends JFrame {
     }
 
     void setPlayersName(String port) {
-        if(clientsMap.size() >= 2) {
-            for (Map.Entry<Integer, String> entry: clientsMap.entrySet()) {
+        if (clientsMap.size() >= 2) {
+            for (Map.Entry<Integer, String> entry : clientsMap.entrySet()) {
                 int key = entry.getKey();
-                if(key != Integer.parseInt(port)) {
-                    sendMessage("Rival:"+clientsMap.get(key)+":"+key, Integer.parseInt(port), clientsIPMap.get(key));
+                if (key != Integer.parseInt(port)) {
+                    sendMessage("Rival:" + clientsMap.get(key) + ":" + key, Integer.parseInt(port), clientsIPMap.get(key));
                 }
             }
         }
@@ -182,13 +182,11 @@ public class Othello_Server_New extends JFrame {
 
     void sendMessage(String str, int port, String clientIp) {
         try {
-            socket.connect(new InetSocketAddress(port));
-//            DatagramPacket sendPacket = new DatagramPacket(str.getBytes(), str.getBytes().length,
-//                    InetAddress.getByName(clientIp), port);
+            socket.connect(new InetSocketAddress(InetAddress.getByName(clientIp), port));
             DatagramPacket sendPacket = new DatagramPacket(str.getBytes(), str.getBytes().length,
                     socket.getInetAddress(), port);
-            System.out.println(new String(sendPacket.getData()));
             socket.send(sendPacket);
+            socket.disconnect();
         } catch (IOException e) {
             e.printStackTrace();
         }

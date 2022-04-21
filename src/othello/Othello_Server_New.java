@@ -25,7 +25,7 @@ public class Othello_Server_New extends JFrame {
     JButton shutdownButton = new JButton("Server Shutdown");
     DatagramSocket socket;
 
-    public Othello_Server_New() throws SocketException {
+    public Othello_Server_New() {
         setSize(300, 300);
         setTitle("사용자 목록");
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);

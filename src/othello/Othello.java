@@ -496,7 +496,7 @@ public class Othello extends JFrame {
     static class Block extends JButton {
 
         public Block() {
-            setIcon(new ImageIcon(getToolkit().getImage("Othello/Block.png").getScaledInstance(115, 110, Image.SCALE_SMOOTH)));
+            setIcon(new ImageIcon(getToolkit().getImage("./Othello/Block.png").getScaledInstance(115, 110, Image.SCALE_SMOOTH)));
             setName("Block");
             setSize(115, 110);
 
@@ -507,7 +507,7 @@ public class Othello extends JFrame {
         }
 
         void setColor(String color) {
-            setIcon(new ImageIcon(getToolkit().getImage("Othello/" + color + ".png").getScaledInstance(115, 110, Image.SCALE_SMOOTH)));
+            setIcon(new ImageIcon(getToolkit().getImage("./Othello/" + color + ".png").getScaledInstance(115, 110, Image.SCALE_SMOOTH)));
             setName(color);
             repaint();
         }

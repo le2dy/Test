@@ -1,2 +1,5 @@
 # Project exclude paths
 /out/
+src/othello/Test.java
+src/othello/Othello_Server.java
+.idea/sonarlint/issuestore/index.pb

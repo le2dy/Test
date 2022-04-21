@@ -23,12 +23,15 @@ public class Othello_Server_New extends JFrame {
     JPanel boardPanel = new JPanel();
     JLabel jLabel = new JLabel("서버 접속 유저(0명) " + ip);
     JButton shutdownButton = new JButton("Server Shutdown");
+    DatagramSocket socket;
 
-    public Othello_Server_New() {
+    public Othello_Server_New() throws SocketException {
         setSize(300, 300);
         setTitle("사용자 목록");
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
+
+        socket = new DatagramSocket(port);
 
         add(boardPanel);
         boardPanel.setLayout(new BoxLayout(boardPanel, BoxLayout.Y_AXIS));
@@ -53,6 +56,7 @@ public class Othello_Server_New extends JFrame {
             @Override
             public void windowClosing(WindowEvent e) {
                 isShutdown = !isShutdown;
+                System.exit(0);
             }
         });
 
@@ -64,11 +68,11 @@ public class Othello_Server_New extends JFrame {
     void receive() {
         byte[] bytes = new byte[512];
 
-        try (DatagramSocket server = new DatagramSocket(port)) {
+        try {
             DatagramPacket packet = new DatagramPacket(bytes, bytes.length);
 
             while (!isShutdown) {
-                server.receive(packet);
+                socket.receive(packet);
                 String data = new String(packet.getData(), 0, packet.getLength());
                 String[] partedData = data.split(":");
 
@@ -177,16 +181,20 @@ public class Othello_Server_New extends JFrame {
     }
 
     void sendMessage(String str, int port, String clientIp) {
-        try (DatagramSocket socket = new DatagramSocket()) {
+        try {
+            socket.connect(new InetSocketAddress(port));
+//            DatagramPacket sendPacket = new DatagramPacket(str.getBytes(), str.getBytes().length,
+//                    InetAddress.getByName(clientIp), port);
             DatagramPacket sendPacket = new DatagramPacket(str.getBytes(), str.getBytes().length,
-                    InetAddress.getByName(clientIp), port);
+                    socket.getInetAddress(), port);
+            System.out.println(new String(sendPacket.getData()));
             socket.send(sendPacket);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws SocketException {
         new Othello_Server_New();
     }
 }

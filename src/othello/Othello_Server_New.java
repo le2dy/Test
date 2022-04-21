@@ -183,9 +183,11 @@ public class Othello_Server_New extends JFrame {
     void sendMessage(String str, int port, String clientIp) {
         try {
             socket.connect(new InetSocketAddress(InetAddress.getByName(clientIp), port));
+
             DatagramPacket sendPacket = new DatagramPacket(str.getBytes(), str.getBytes().length,
                     socket.getInetAddress(), port);
             socket.send(sendPacket);
+
             socket.disconnect();
         } catch (IOException e) {
             e.printStackTrace();
